@@ -48,6 +48,8 @@ class ObfuscatorController:
 
                 if shouldMinifyCode:
                     fileContent = fileContent.replace('\n', '')
+                else:
+                    fileContent = fileContent.replace('\n\n', '\n')
 
         obfuscatedFile.write(fileContent)
         obfuscatedFile.close()
