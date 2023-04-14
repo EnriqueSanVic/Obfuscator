@@ -26,9 +26,9 @@ class DeleteableList(QListWidget):
         self.setFixedSize(self.params.width, self.params.height)
         self.setStyleSheet(
             'QListWidget{'
-                f'background-color: {self.params.backgroundColor};'
-                f'border: 2px solid {self.params.foregroundColor};'
-                'border-radius: 7%;'
+            f'background-color: {self.params.backgroundColor};'
+            f'border: 2px solid {self.params.foregroundColor};'
+            'border-radius: 7%;'
             '}'
         )
 

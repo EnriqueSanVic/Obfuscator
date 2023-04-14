@@ -1,3 +1,4 @@
+import pickle
 from itertools import zip_longest
 
 from src.Utils import isStrEmpty, extractPathExtension
@@ -9,31 +10,42 @@ class ObfuscatorController:
         self.view = view
 
     def obfuscateAction(self):
+
+        self.view.enableObfuscateBtn(False)
+
         filePaths = self.view.getFilePaths()
         references = self.view.getReferences()
         stringA = self.view.getStringA()
         stringB = self.view.getStringB()
-        shouldMinifyCode = self.view.getShouldMinifyCode()
+        shouldMinifyCode = self.view.shouldMinifyCode
+        shouldSaveDecoder = self.view.shouldSaveDecoder
 
         if isStrEmpty(stringA) or isStrEmpty(stringB) or len(references) == 0:
+            self.view.enableObfuscateBtn(True)
             return
 
-        self.obfuscateFiles(filePaths, references, stringA, stringB, shouldMinifyCode)
+        if shouldSaveDecoder:
 
-    def obfuscateFiles(self, filePaths: list, references: list, stringA: str, stringB: str, shouldMinifyCode: bool):
+            path = self.view.requestFilePathToUser()
 
-        #sort references
-        references = sorted(references, reverse=True, key=lambda ref: len(ref))
+            if path is None:
+                return
 
-        combinations = self.generateCombinations(len(references), stringA, stringB)
+        referencesDictionary = self.createReferencesDictionary(stringA, stringB, references)
+
+        self.obfuscateFiles(filePaths, referencesDictionary, references, shouldMinifyCode)
+
+        if shouldSaveDecoder:
+            self.saveDecoderFile(path, referencesDictionary)
+
+        self.view.enableObfuscateBtn(True)
+
+    def obfuscateFiles(self, filePaths: list, referencesDictionary: dict, references: list, shouldMinifyCode: bool):
 
         for filePath in filePaths:
-            self.obfuscateFile(filePath, combinations, references, shouldMinifyCode)
+            self.obfuscateFile(filePath, referencesDictionary, references, shouldMinifyCode)
 
-    def obfuscateFile(self, filePath: str, combinations: list, references: list, shouldMinifyCode: bool):
-
-        referencesDictionary = self.buildReferencesDictionary(references, combinations)
-
+    def obfuscateFile(self, filePath: str, referencesDictionary: dict, references: list, shouldMinifyCode: bool):
         originalFile = open(filePath, 'r')
         fileContent = originalFile.read()
         originalFile.close()
@@ -53,6 +65,15 @@ class ObfuscatorController:
 
         obfuscatedFile.write(fileContent)
         obfuscatedFile.close()
+
+    def createReferencesDictionary(self, stringA: str, stringB: str, references: list) -> dict:
+
+        # sort references
+        references = sorted(references, reverse=True, key=lambda ref: len(ref))
+
+        combinations = self.generateCombinations(len(references), stringA, stringB)
+
+        return self.buildReferencesDictionary(references, combinations)
 
     def buildReferencesDictionary(self, references: list, combinations: list) -> dict:
         dic = {}
@@ -81,3 +102,9 @@ class ObfuscatorController:
             exp += 1
             nCombs = 2 ** exp
         return exp
+
+    def saveDecoderFile(self, path: str, referencesDictionary: dict):
+        binarySerialization = pickle.dumps(referencesDictionary)
+        decoderFile = open(path, 'wb')
+        decoderFile.write(binarySerialization)
+        decoderFile.close()
