@@ -1,7 +1,7 @@
 WINDOW_TITLE = 'Obfuscator v0.1'
 
-OBFUSCATION_MODE = 'OB mode'
-DEOFUSCATE_MODE = 'DEOB mode'
+OBFUSCATION_MODE = 'OB MODE'
+DEOFUSCATE_MODE = 'DEOB MODE'
 
 FILE_PATH_LIST = 'File paths list'
 REFERENCES_LIST = 'References list'
