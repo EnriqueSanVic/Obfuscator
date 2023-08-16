@@ -36,7 +36,7 @@ class ObfuscatorController:
         self.obfuscateFiles(filePaths, referencesDictionary, references, shouldMinifyCode)
 
         if shouldSaveDecoder:
-            self.saveDecoderFile(path, referencesDictionary)
+            self.saveDecoderFile(path, stringA, stringB,referencesDictionary)
 
         self.view.enableObfuscateBtn(True)
 
@@ -103,8 +103,16 @@ class ObfuscatorController:
             nCombs = 2 ** exp
         return exp
 
-    def saveDecoderFile(self, path: str, referencesDictionary: dict):
-        binarySerialization = pickle.dumps(referencesDictionary)
+    def saveDecoderFile(self, path: str, stringA:str, stringB:str, referencesDictionary: dict):
+
+        decoderDic = {
+            'string-a': stringA,
+            'string-b': stringB,
+            'references': referencesDictionary
+        }
+
+        binarySerialization = pickle.dumps(decoderDic)
+
         decoderFile = open(path, 'wb')
         decoderFile.write(binarySerialization)
         decoderFile.close()

@@ -1,7 +1,7 @@
 WINDOW_TITLE = 'Obfuscator v0.1'
 
-OBFUSCATION_MODE = 'OB MODE'
-DEOFUSCATE_MODE = 'DEOB MODE'
+OBFUSCATION_MODE = 'Obfuscate'
+DEOFUSCATE_MODE = 'Deobfuscate'
 
 FILE_PATH_LIST = 'File paths list'
 REFERENCES_LIST = 'References list'
@@ -10,10 +10,12 @@ START = 'Start'
 STRING_A = 'String A'
 STRING_B = 'String B'
 MINIFY_CODE = 'Minify code'
-SAVE_DECODER_FILE_CODE = 'Save decoder file'
 
+SAVE_DECODER_FILE_CODE = 'Save decoder file'
 SAVE_DECODER_FILE = 'Save decoder file'
 ALLOWED_FILE_TYPES_FOR_DECODER_FILE = 'Decoder files for Obfuscator (*.dec)'
+
+SELECT_DECODER_FILE = 'Select decoder file'
 
 WIDGET_BACKGROUND_COLOR = '#2b2b2b'
 
@@ -27,7 +29,7 @@ WINDOW_WIDTH = 820
 WINDOW_HEIGHT = 577
 
 HORIZONTAL_PADDING = 30
-TOP_PADDING = 37
+TOP_PADDING = 40
 BOTTOM_PADDING = 25
 
 TITLE_Y_CORRECTION = 3

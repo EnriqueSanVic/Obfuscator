@@ -1,3 +1,6 @@
+import asyncio
+
+from PyQt5.QtCore import pyqtSignal, QEventLoop
 from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtWidgets import QListWidget, QListWidgetItem, QWidget, QPushButton, QLabel, QHBoxLayout
 
@@ -10,8 +13,8 @@ ACCENT_DARK_ICON_PATH = './assets/accent_dark_delete.png'
 
 ICON_SIZE = 20
 
-
 class DeleteableList(QListWidget):
+
     def __init__(self, parent, params: DeleteableListParams):
 
         super().__init__(parent)
@@ -31,6 +34,8 @@ class DeleteableList(QListWidget):
             'border-radius: 7%;'
             '}'
         )
+        self.model().rowsInserted.connect(self.afterListChange)
+        self.model().rowsRemoved.connect(self.afterListChange)
 
     def addStringItemList(self, stringList: list):
 
@@ -45,6 +50,7 @@ class DeleteableList(QListWidget):
             return
 
         listWidgetItem = QListWidgetItem()
+
         itemWidget = QWidget()
 
         itemWidget.setStyleSheet(f'background-color: {self.params.backgroundColor};')
@@ -56,6 +62,28 @@ class DeleteableList(QListWidget):
 
         self.addItem(listWidgetItem)
         self.setItemWidget(listWidgetItem, itemWidget)
+
+    def afterListChange(self):
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self.evaluateScrollMovement())
+
+    async def evaluateScrollMovement(self):
+
+        #await asyncio.sleep(2)
+
+        if self.params.moveVerticalScrollToEndWhenUpdateList:
+            self.moveVerticalScrollToEndWhenUpdateList()
+
+        if self.params.moveHorizontalScrollToEndWhenUpdateList:
+            self.moveHorizontalScrollToEndWhenUpdateList()
+
+    def moveHorizontalScrollToEndWhenUpdateList(self):
+        horizontalScrollbar = self.horizontalScrollBar()
+        horizontalScrollbar.setValue(horizontalScrollbar.maximum())
+
+    def moveVerticalScrollToEndWhenUpdateList(self):
+        verticalScrollbar = self.verticalScrollBar()
+        verticalScrollbar.setValue(verticalScrollbar.maximum())
 
     def buildListItemWidgetLayout(self, name: str, listWidgetItem: QListWidgetItem) -> QHBoxLayout:
 
@@ -92,6 +120,7 @@ class DeleteableList(QListWidget):
     def deleteListItemAction(self, itemWidget):
         item = self.item(self.row(itemWidget))
         self.takeItem(self.row(item))
+        self.afterListChange()
 
     def getStringItems(self) -> list:
         elements = []
