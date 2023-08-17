@@ -49,6 +49,7 @@ class Obfuscator(QWidget):
     ubuntuMonoFontFamily: str = None
     exoFontFamily: str = None
     inputReference: QLineEdit = None
+    decoderFilePathDisabledInput: QLineEdit = None
 
     def __init__(self):
         super().__init__()
@@ -147,6 +148,8 @@ class Obfuscator(QWidget):
         self.confListPaths(WINDOW_WIDTH - HORIZONTAL_PADDING * 2, 200)
         self.confAddFilesBtn(WINDOW_WIDTH - 120 - HORIZONTAL_PADDING, 295)
         self.confDecoderFilePathTitle()
+        self.confSelectDecoderFileBtn()
+        self.confDecoderFilePathDisabledInput()
 
     def confWindowTitle(self):
         listPathsTitle = self.buildLabel(
@@ -558,6 +561,58 @@ class Obfuscator(QWidget):
             filePath = dialog.selectedFiles()[0]
 
         return filePath
+    
+    def confSelectDecoderFileBtn(self):
+        selectDecoderFileBtn = QPushButton()
+        selectDecoderFileBtn.setIcon(self.folderIcon)
+
+        selectDecoderFileBtn.move(HORIZONTAL_PADDING, 385)
+        selectDecoderFileBtn.setFixedSize(110, 30)
+        selectDecoderFileBtn.setIconSize(QSize(27, 27))
+
+        selectDecoderFileBtn.clicked.connect(self.findDecoderFileAction)
+        selectDecoderFileBtn.pressed.connect(lambda: selectDecoderFileBtn.setIcon(self.folderPressedIcon))
+        selectDecoderFileBtn.released.connect(lambda: selectDecoderFileBtn.setIcon(self.folderIcon))
+
+        selectDecoderFileBtn.setStyleSheet(
+            'QPushButton{'
+            'color: white;'
+            f'background-color: {PRIMARY_COLOR};'
+            'border-top-left-radius: 7%;'
+            'border-top-right-radius: 0%;'
+            'border-bottom-left-radius: 7%;'
+            'border-bottom-right-radius: 0%;'
+            '}'
+            '''
+            QPushButton:hover{
+                 background-color: #44eb97; 
+            }
+            '''
+            'QPushButton:pressed{'
+            f'color:  {PRIMARY_COLOR};'
+            'background-color: white;'
+            '}'
+        )
+
+        selectDecoderFileBtn.setParent(self)
+        self.currentModeGUIElements.append(selectDecoderFileBtn)
+
+    def findDecoderFileAction(self):
+        pass
+
+    def confDecoderFilePathDisabledInput(self):
+        self.decoderFilePathDisabledInput = self.buildLineEdit({
+            'top-left': 0,
+            'top-right': 7,
+            'bottom-left': 0,
+            'bottom-right': 7,
+        })
+        self.decoderFilePathDisabledInput.move(HORIZONTAL_PADDING + 110, 385)
+        self.decoderFilePathDisabledInput.setFixedSize(WINDOW_WIDTH - HORIZONTAL_PADDING * 2 - 110, 30)
+        self.decoderFilePathDisabledInput.setDisabled(True)
+
+        self.decoderFilePathDisabledInput.setParent(self)
+        self.currentModeGUIElements.append(self.decoderFilePathDisabledInput)
 
     # BUILD FUNCTIONS
 
