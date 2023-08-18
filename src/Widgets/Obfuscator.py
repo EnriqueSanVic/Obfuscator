@@ -1,15 +1,15 @@
 import enum
 
-from PyQt5 import QtCore
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
+from PyQt6 import QtCore
+from PyQt6.QtWidgets import *
+from PyQt6.QtCore import *
+from PyQt6.QtGui import *
+from src.Params.DeleteableListParams import DeleteableListParams
 
 from src.Contants import *
 from src.ResourceRoutes import *
 from src.Controllers.ObfuscatorController import ObfuscatorController
 from src.Widgets.DeleteableList import DeleteableList
-from src.Params.DeleteableListParams import DeleteableListParams
 
 
 # Using enum class create enumerations
@@ -18,41 +18,42 @@ class ObfuscatorModes(enum.Enum):
     DEOB_MODE = 1
 
 
-class Obfuscator(QWidget):
-
-    controller: ObfuscatorController = None
-    mode: int = None
+class Obfuscator(QTabWidget):
+    controller: ObfuscatorController
+    mode: ObfuscatorModes = ObfuscatorModes.OB_MODE
     currentModeGUIElements: list = []
-    changeModeBtn: QPushButton = None
-    windowModeText: QLabel = None
-    obfuscateBtn: QPushButton = None
-    offsetWindowPosition = None
-    changeModeIcon: QIcon = None
-    minimizeWindowIcon: QIcon = None
-    closeIcon: QIcon = None
-    closeHoverIcon: QIcon = None
-    windowIcon: QIcon = None
-    folderIcon: QIcon = None
-    folderPressedIcon: QIcon = None
-    addIcon: QIcon = None
-    addPressedIcon: QIcon = None
-    windowIcon: QIcon = None
+    changeModeBtn: QPushButton
+    windowModeText: QLabel
+    obfuscateBtn: QPushButton
+    offsetWindowPosition: QPoint | None = None
+    isMousePressWindow:bool = False
+    changeModeIcon: QIcon
+    minimizeWindowIcon: QIcon
+    closeIcon: QIcon
+    closeHoverIcon: QIcon
+    windowIcon: QIcon
+    folderIcon: QIcon
+    folderPressedIcon: QIcon
+    addIcon: QIcon
+    addPressedIcon: QIcon
+    windowIcon: QIcon
     shouldMinifyCode: bool = False
     shouldSaveDecoder: bool = False
-    binaryStringBTitle: QLabel = None
-    binaryStringATitle: QLabel = None
-    binaryStringBInput: QLineEdit = None
-    binaryStringAInput: QLineEdit = None
-    pathsList: DeleteableList = None
-    listReferencesTitle: QLabel = None
-    referencesList: DeleteableList = None
-    ubuntuMonoFontFamily: str = None
-    exoFontFamily: str = None
-    inputReference: QLineEdit = None
-    decoderFilePathDisabledInput: QLineEdit = None
+    binaryStringBTitle: QLabel
+    binaryStringATitle: QLabel
+    binaryStringBInput: QLineEdit
+    binaryStringAInput: QLineEdit
+    pathsList: DeleteableList
+    listReferencesTitle: QLabel
+    referencesList: DeleteableList
+    ubuntuMonoFontFamily: str
+    exoFontFamily: str
+    inputReference: QLineEdit
+    decoderFilePathDisabledInput: QLineEdit
 
     def __init__(self):
         super().__init__()
+        self.setMouseTracking(True)
         self.controller = ObfuscatorController(self)
         self.mode = ObfuscatorModes.OB_MODE
         self.currentModeGUIElements = []
@@ -90,16 +91,11 @@ class Obfuscator(QWidget):
         self.currentModeGUIElements = []
 
     def conf(self):
-
         self.setWindowTitle(WINDOW_TITLE)
         self.setWindowIcon(self.windowIcon)
-
-        self.setWindowFlags(Qt.FramelessWindowHint)
-
+        self.setWindowFlags(QtCore.Qt.WindowType.FramelessWindowHint)
         self.setFixedSize(WINDOW_WIDTH, WINDOW_HEIGHT)
-
         self.setObjectName('ob-container')
-
         self.setStyleSheet('''
                 #ob-container {
                     background-color: #3c3f41;
@@ -107,7 +103,6 @@ class Obfuscator(QWidget):
                     border-radius: 7%;
                 }
         ''')
-
         self.confWindowTitle()
         self.confWindowControlButtons()
         self.confChangeModeBtn()
@@ -172,7 +167,7 @@ class Obfuscator(QWidget):
             font=QFont(
                 self.ubuntuMonoFontFamily,
                 12,
-                weight=QFont.Normal
+                weight=400
             )
         )
         listPathsTitle.move(0, 0)
@@ -228,7 +223,7 @@ class Obfuscator(QWidget):
     def confChangeModeBtn(self):
         self.changeModeBtn = QPushButton(OBFUSCATION_MODE)
 
-        font = QFont(self.exoFontFamily, 10, weight=QFont.Bold)
+        font = QFont(self.exoFontFamily, 10, weight=700)
         self.changeModeBtn.setFont(font)
 
         self.changeModeBtn.move(230, 0)
@@ -289,7 +284,7 @@ class Obfuscator(QWidget):
         addFilesBtn.move(x, y)
         addFilesBtn.setFixedSize(120, 32)
 
-        font = QFont(self.exoFontFamily, 12, weight=QFont.Normal)
+        font = QFont(self.exoFontFamily, 12, weight=400)
         addFilesBtn.setFont(font)
 
         addFilesBtn.setIcon(self.folderIcon)
@@ -327,10 +322,6 @@ class Obfuscator(QWidget):
         listPathsTitle.move(HORIZONTAL_PADDING + 5, 350)
         listPathsTitle.setParent(self)
         self.currentModeGUIElements.append(listPathsTitle)
-
-    def AddFilesAction(self):
-        fileNames = self.showAndGetFileNames()
-        self.pathsList.addStringItemList(fileNames)
 
     def confListReferencesTitle(self):
         self.listReferencesTitle = self.buildLabel(REFERENCES_LIST, 15)
@@ -410,7 +401,7 @@ class Obfuscator(QWidget):
         self.obfuscateBtn.move(HORIZONTAL_PADDING, WINDOW_HEIGHT - BOTTOM_PADDING - 32)
         self.obfuscateBtn.setFixedSize(140, 32)
 
-        font = QFont(self.exoFontFamily, 14, weight=QFont.Normal)
+        font = QFont(self.exoFontFamily, 14, weight=400)
         self.obfuscateBtn.setFont(font)
 
         self.obfuscateBtn.setStyleSheet(
@@ -439,10 +430,6 @@ class Obfuscator(QWidget):
         self.obfuscateBtn.setParent(self)
         self.currentModeGUIElements.append(self.obfuscateBtn)
 
-    def showAndGetFileNames(self) -> list:
-        fileNames, _ = QFileDialog.getOpenFileNames(self, "Select files", "", "All files (*)")
-        return fileNames
-
     def confBinaryStringTitles(self):
         self.binaryStringATitle = self.buildLabel(STRING_A, 13)
         self.binaryStringATitle.move(120, 345 - TITLE_Y_CORRECTION)
@@ -459,13 +446,13 @@ class Obfuscator(QWidget):
     def confBinaryStringInputs(self):
         self.binaryStringAInput = self.buildBinaryStringInput()
         self.binaryStringAInput.move(110, 375)
-        self.binaryStringAInput.setAlignment(QtCore.Qt.AlignCenter)
+        self.binaryStringAInput.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.binaryStringAInput.setParent(self)
         self.currentModeGUIElements.append(self.binaryStringAInput)
 
         self.binaryStringBInput = self.buildBinaryStringInput()
         self.binaryStringBInput.move(290, 375)
-        self.binaryStringBInput.setAlignment(QtCore.Qt.AlignCenter)
+        self.binaryStringBInput.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.binaryStringBInput.setParent(self)
         self.currentModeGUIElements.append(self.binaryStringBInput)
 
@@ -473,9 +460,9 @@ class Obfuscator(QWidget):
         minCheckbox = QCheckBox(MINIFY_CODE, self)
         minCheckbox.move(195, 430)
         minCheckbox.setFixedSize(145, 25)
-        font = QFont(self.exoFontFamily, 12, weight=QFont.Normal)
+        font = QFont(self.exoFontFamily, 12, weight=400)
         minCheckbox.setFont(font)
-        minCheckbox.setCheckState(False)
+        minCheckbox.setCheckState(Qt.CheckState.Unchecked)
         minCheckbox.setStyleSheet(
             'QCheckBox{'
             'color: white;'
@@ -499,15 +486,15 @@ class Obfuscator(QWidget):
         self.currentModeGUIElements.append(minCheckbox)
 
     def minCheckboxChange(self, state):
-        self.shouldMinifyCode = state != Qt.Checked
+        self.shouldMinifyCode = (state != Qt.CheckState.Checked)
 
     def confsaveDecoderCheckbox(self):
         saveDecoderFileCheckbox = QCheckBox(SAVE_DECODER_FILE_CODE, self)
         saveDecoderFileCheckbox.move(195, 470)
         saveDecoderFileCheckbox.setFixedSize(180, 25)
-        font = QFont(self.exoFontFamily, 12, weight=QFont.Normal)
+        font = QFont(self.exoFontFamily, 12, weight=400)
         saveDecoderFileCheckbox.setFont(font)
-        saveDecoderFileCheckbox.setCheckState(False)
+        saveDecoderFileCheckbox.setCheckState(Qt.CheckState.Unchecked)
         saveDecoderFileCheckbox.setStyleSheet(
             'QCheckBox{'
             'color: white;'
@@ -527,41 +514,38 @@ class Obfuscator(QWidget):
             '}'
         )
         saveDecoderFileCheckbox.toggle()
-        saveDecoderFileCheckbox.stateChanged.connect(self.saveDecoderFile)
+        saveDecoderFileCheckbox.stateChanged.connect(self.changStateOfShouldSaveDecoder)
         self.currentModeGUIElements.append(saveDecoderFileCheckbox)
 
-    def saveDecoderFile(self, state):
-        self.shouldSaveDecoder = state != Qt.Checked
+    def changStateOfShouldSaveDecoder(self, state):
+        self.shouldSaveDecoder = state != Qt.CheckState.Checked
 
-    def mousePressEvent(self, event):
+
+    def mousePressEvent(self, event: QMouseEvent):
+        self.isMousePressWindow = True
         self.offsetWindowPosition = event.pos()
 
-    def mouseMoveEvent(self, event):
+    def mouseReleaseEvent(self, event: QMouseEvent):
+        self.isMousePressWindow = False
+
+    def mouseMoveEvent(self, event: QMouseEvent):
+        
+        print(f'Window is pressed: {self.isMousePressWindow}')
+
+        if(not self.isMousePressWindow or self.offsetWindowPosition is None):
+            return
+        
         try:
-            x = event.globalX()
-            y = event.globalY()
-            xW = self.offsetWindowPosition.x()
-            yW = self.offsetWindowPosition.y()
-            self.move(x - xW, y - yW)
-        except:
+            globalPositionPoint: QPointF = event.globalPosition()
+            xW = float(self.offsetWindowPosition.x())
+            yW = float(self.offsetWindowPosition.y())
+            xNext, yNext = int(globalPositionPoint.x() - xW), int(globalPositionPoint.y() - yW)
+            print(f'Move to {xNext} ̣{yNext}')
+            self.move(QPoint(xNext, yNext))
+        except Exception as ex:
+            print(ex)
             pass
 
-    def requestFilePathToUser(self):
-
-        dialog = QFileDialog()
-        dialog.setFilter(dialog.filter() | QtCore.QDir.Hidden)
-        dialog.setWindowTitle(SAVE_DECODER_FILE)
-        dialog.setDefaultSuffix('dec')
-        dialog.setAcceptMode(QFileDialog.AcceptSave)
-        dialog.setNameFilters([ALLOWED_FILE_TYPES_FOR_DECODER_FILE])
-
-        filePath = None
-
-        if dialog.exec_() == QDialog.Accepted:
-            filePath = dialog.selectedFiles()[0]
-
-        return filePath
-    
     def confSelectDecoderFileBtn(self):
         selectDecoderFileBtn = QPushButton()
         selectDecoderFileBtn.setIcon(self.folderIcon)
@@ -573,7 +557,7 @@ class Obfuscator(QWidget):
         selectDecoderFileBtn.clicked.connect(self.findDecoderFileAction)
         selectDecoderFileBtn.pressed.connect(lambda: selectDecoderFileBtn.setIcon(self.folderPressedIcon))
         selectDecoderFileBtn.released.connect(lambda: selectDecoderFileBtn.setIcon(self.folderIcon))
-
+        selectDecoderFileBtn.setObjectName('select-decoder-file-btn')
         selectDecoderFileBtn.setStyleSheet(
             'QPushButton{'
             'color: white;'
@@ -597,9 +581,6 @@ class Obfuscator(QWidget):
         selectDecoderFileBtn.setParent(self)
         self.currentModeGUIElements.append(selectDecoderFileBtn)
 
-    def findDecoderFileAction(self):
-        pass
-
     def confDecoderFilePathDisabledInput(self):
         self.decoderFilePathDisabledInput = self.buildLineEdit({
             'top-left': 0,
@@ -607,13 +588,61 @@ class Obfuscator(QWidget):
             'bottom-left': 0,
             'bottom-right': 7,
         })
+
+        self.decoderFilePathDisabledInput.setStyleSheet(
+            f'{self.decoderFilePathDisabledInput.styleSheet()}'
+            'QLineEdit{'
+                f'border-color: {PRIMARY_COLOR};'
+            '}'
+        )
+
         self.decoderFilePathDisabledInput.move(HORIZONTAL_PADDING + 110, 385)
         self.decoderFilePathDisabledInput.setFixedSize(WINDOW_WIDTH - HORIZONTAL_PADDING * 2 - 110, 30)
         self.decoderFilePathDisabledInput.setDisabled(True)
 
         self.decoderFilePathDisabledInput.setParent(self)
         self.currentModeGUIElements.append(self.decoderFilePathDisabledInput)
+    
+    # Files explorer GUI system actions
 
+    def AddFilesAction(self):
+        fileNames = self.showAndGetFileNames('All files (*)')
+        self.pathsList.addStringItemList(fileNames)
+
+    def setDecoderFileAction(self):
+        decoderFilePath = self.requestFilePathToUsetToSaveDecoderFile()
+        if decoderFilePath is None:
+            return
+        self.decoderFilePathDisabledInput.setText(decoderFilePath)
+
+    def findDecoderFileAction(self):
+        path = self.showAndGetFileName('Decoder file (*.dec)')
+        self.decoderFilePathDisabledInput.setText(path)
+
+    def requestFilePathToUsetToSaveDecoderFile(self)->str | None:
+
+        dialog = QFileDialog()
+        dialog.setFilter(dialog.filter() | QDir.Filter.Hidden)
+        dialog.setWindowTitle(SAVE_DECODER_FILE)
+        dialog.setDefaultSuffix('dec')
+        dialog.setAcceptMode(QFileDialog.AcceptMode.AcceptSave)
+        dialog.setNameFilters([ALLOWED_FILE_TYPES_FOR_DECODER_FILE])
+
+        filePath = None
+
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            filePath = dialog.selectedFiles()[0]
+
+        return filePath
+
+    def showAndGetFileNames(self, extensionFilter: str) -> list:
+        fileNames, _ = QFileDialog.getOpenFileNames(self, "Select files", "", extensionFilter)
+        return fileNames
+    
+    def showAndGetFileName(self, extensionFilter: str) -> str:
+        fileName, _ = QFileDialog.getOpenFileName(self, "Select file", "", extensionFilter)
+        return fileName
+    
     # BUILD FUNCTIONS
 
     def buildBinaryStringInput(self) -> QLineEdit:
@@ -626,7 +655,7 @@ class Obfuscator(QWidget):
         binaryStringInput.setFixedSize(120, 30)
         return binaryStringInput
 
-    def buildLineEdit(self, radiusSizes: dict = None) -> QLineEdit:
+    def buildLineEdit(self, radiusSizes: dict | None = None) -> QLineEdit:
         lineEdit = QLineEdit()
         font = QFont(self.ubuntuMonoFontFamily, 14)
         lineEdit.setFont(font)
@@ -654,9 +683,9 @@ class Obfuscator(QWidget):
 
         return lineEdit
 
-    def buildLabel(self, text: str, fontSize: int, backgroundColor: str = None, foregroundColor=None,
-                   paddings: dict = None, radiusSizes: dict = None,
-                   font: QFont = None) -> QLabel:
+    def buildLabel(self, text: str, fontSize: int, backgroundColor: str | None = None, foregroundColor=None,
+                   paddings: dict | None = None, radiusSizes: dict | None = None,
+                   font: QFont | None = None) -> QLabel:
         label = QLabel(text)
 
         styleSheet = ''
@@ -676,7 +705,7 @@ class Obfuscator(QWidget):
             styleSheet += f'padding-right: {paddings["right"]}px;'
 
         if font is None:
-            font = QFont(self.exoFontFamily, fontSize, weight=QFont.Normal)
+            font = QFont(self.exoFontFamily, fontSize, weight=400)
 
         if radiusSizes is not None:
             styleSheet += f'border-top-left-radius: {radiusSizes.get("top-left", 0)}%;'

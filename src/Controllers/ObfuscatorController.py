@@ -19,6 +19,7 @@ class ObfuscatorController:
         stringB = self.view.getStringB()
         shouldMinifyCode = self.view.shouldMinifyCode
         shouldSaveDecoder = self.view.shouldSaveDecoder
+        path = None
 
         if isStrEmpty(stringA) or isStrEmpty(stringB) or len(references) == 0:
             self.view.enableObfuscateBtn(True)
@@ -26,7 +27,7 @@ class ObfuscatorController:
 
         if shouldSaveDecoder:
 
-            path = self.view.requestFilePathToUser()
+            path = self.view.requestFilePathToUsetToSaveDecoderFile()
 
             if path is None:
                 return
@@ -36,7 +37,7 @@ class ObfuscatorController:
         self.obfuscateFiles(filePaths, referencesDictionary, references, shouldMinifyCode)
 
         if shouldSaveDecoder:
-            self.saveDecoderFile(path, stringA, stringB,referencesDictionary)
+            self.saveDecoderFile(path, stringA, stringB,referencesDictionary) # type: ignore
 
         self.view.enableObfuscateBtn(True)
 

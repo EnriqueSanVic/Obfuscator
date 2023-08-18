@@ -1,6 +1,6 @@
-from PyQt5.QtCore import Qt, QPoint
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QMainWindow
+from PyQt6.QtCore import Qt, QPoint
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import QMainWindow
 
 from src.Contants import *
 from src.Widgets.Obfuscator import Obfuscator

@@ -1,10 +1,9 @@
 import asyncio
 
-from PyQt5.QtCore import pyqtSignal, QEventLoop
-from PyQt5.QtGui import QFont, QIcon
-from PyQt5.QtWidgets import QListWidget, QListWidgetItem, QWidget, QPushButton, QLabel, QHBoxLayout
+from PyQt6.QtGui import QFont, QIcon
+from PyQt6.QtWidgets import QListWidget, QListWidgetItem, QWidget, QPushButton, QLabel, QHBoxLayout
+from src.Params.DeleteableListParams import DeleteableListParams
 
-from src.Params import DeleteableListParams
 from src.Utils import isStrEmpty
 
 DELETE_ICON_PATH = './assets/delete.png'
@@ -34,8 +33,14 @@ class DeleteableList(QListWidget):
             'border-radius: 7%;'
             '}'
         )
-        self.model().rowsInserted.connect(self.afterListChange)
-        self.model().rowsRemoved.connect(self.afterListChange)
+
+        model = self.model()
+
+        if model is None:
+            return
+
+        model.rowsInserted.connect(self.afterListChange)
+        model.rowsRemoved.connect(self.afterListChange)
 
     def addStringItemList(self, stringList: list):
 
@@ -79,10 +84,14 @@ class DeleteableList(QListWidget):
 
     def moveHorizontalScrollToEndWhenUpdateList(self):
         horizontalScrollbar = self.horizontalScrollBar()
+        if horizontalScrollbar is None:
+            return
         horizontalScrollbar.setValue(horizontalScrollbar.maximum())
 
     def moveVerticalScrollToEndWhenUpdateList(self):
         verticalScrollbar = self.verticalScrollBar()
+        if verticalScrollbar is None:
+            return
         verticalScrollbar.setValue(verticalScrollbar.maximum())
 
     def buildListItemWidgetLayout(self, name: str, listWidgetItem: QListWidgetItem) -> QHBoxLayout:
@@ -92,8 +101,8 @@ class DeleteableList(QListWidget):
 
         deleteBtn.setStyleSheet("border: none; padding: 0px;")
 
-        deleteBtn.enterEvent = lambda event: deleteBtn.setIcon(self.accentDeleteIcon)
-        deleteBtn.leaveEvent = lambda event: deleteBtn.setIcon(self.deleteIcon)
+        deleteBtn.enterEvent = lambda event: deleteBtn.setIcon(self.accentDeleteIcon) # type: ignore
+        deleteBtn.leaveEvent = lambda event: deleteBtn.setIcon(self.deleteIcon) # type: ignore
 
         deleteBtn.pressed.connect(lambda: deleteBtn.setIcon(self.accentDarkDeleteIcon))
         deleteBtn.released.connect(lambda: deleteBtn.setIcon(self.deleteIcon))
@@ -126,7 +135,10 @@ class DeleteableList(QListWidget):
         elements = []
 
         for i in range(self.count()):
-            itemText = self.item(i).text()
+            item = self.item(i)
+            if item is None:
+                continue
+            itemText = item.text()
             elements.append(itemText)
 
         return elements
