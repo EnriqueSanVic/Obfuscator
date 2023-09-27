@@ -1,9 +1,8 @@
 import enum
 
 from PyQt6 import QtCore
-from PyQt6.QtWidgets import *
 from PyQt6.QtCore import *
-from PyQt6.QtGui import *
+from src.factories.ComponentesBasicBuilds import *
 from src.Params.DeleteableListParams import DeleteableListParams
 
 from src.Contants import *
@@ -11,22 +10,25 @@ from src.ResourceRoutes import *
 from src.Controllers.ObfuscatorController import ObfuscatorController
 from src.Widgets.DeleteableList import DeleteableList
 
+ubuntuMonoFontFamily: str
+exoFontFamily: str
 
-# Using enum class create enumerations
+
 class ObfuscatorModes(enum.Enum):
     OB_MODE = 0
     DEOB_MODE = 1
 
 
-class Obfuscator(QTabWidget):
+class Obfuscator(QWidget):
     controller: ObfuscatorController
     mode: ObfuscatorModes = ObfuscatorModes.OB_MODE
     currentModeGUIElements: list = []
     changeModeBtn: QPushButton
     windowModeText: QLabel
     obfuscateBtn: QPushButton
+    deobfuscateBtn: QPushButton
     offsetWindowPosition: QPoint | None = None
-    isMousePressWindow:bool = False
+    isMousePressWindow: bool = False
     changeModeIcon: QIcon
     minimizeWindowIcon: QIcon
     closeIcon: QIcon
@@ -35,8 +37,8 @@ class Obfuscator(QTabWidget):
     folderIcon: QIcon
     folderPressedIcon: QIcon
     addIcon: QIcon
+    symbolIcon: QIcon
     addPressedIcon: QIcon
-    windowIcon: QIcon
     shouldMinifyCode: bool = False
     shouldSaveDecoder: bool = False
     binaryStringBTitle: QLabel
@@ -46,8 +48,6 @@ class Obfuscator(QTabWidget):
     pathsList: DeleteableList
     listReferencesTitle: QLabel
     referencesList: DeleteableList
-    ubuntuMonoFontFamily: str
-    exoFontFamily: str
     inputReference: QLineEdit
     decoderFilePathDisabledInput: QLineEdit
 
@@ -65,9 +65,7 @@ class Obfuscator(QTabWidget):
         self.show()
 
     def updateModeGUI(self):
-
         self.removeModeGUIElements()
-
         if self.mode is ObfuscatorModes.OB_MODE:
             self.changeModeBtn.setText(OBFUSCATION_MODE)
             self.confObfuscateModeWidgets()
@@ -79,15 +77,12 @@ class Obfuscator(QTabWidget):
         self.update()
 
     def showAllCurrentModeGUIElements(self):
-
         for child in self.currentModeGUIElements:
             child.show()
 
     def removeModeGUIElements(self):
-
         for child in self.currentModeGUIElements:
             child.deleteLater()
-
         self.currentModeGUIElements = []
 
     def conf(self):
@@ -104,11 +99,37 @@ class Obfuscator(QTabWidget):
                 }
         ''')
         self.confWindowTitle()
+        self.confWindowIcon()
         self.confWindowControlButtons()
         self.confChangeModeBtn()
 
+    # Window events
+
+    def mousePressEvent(self, event: QMouseEvent):
+        self.isMousePressWindow = True
+        self.offsetWindowPosition = event.pos()
+
+    def mouseReleaseEvent(self, event: QMouseEvent):
+        self.isMousePressWindow = False
+
+    def mouseMoveEvent(self, event: QMouseEvent):
+
+        if not self.isMousePressWindow or self.offsetWindowPosition is None:
+            return
+
+        try:
+            globalPositionPoint: QPointF = event.globalPosition()
+            xW = float(self.offsetWindowPosition.x())
+            yW = float(self.offsetWindowPosition.y())
+            xNext, yNext = int(globalPositionPoint.x() - xW), int(globalPositionPoint.y() - yW)
+            self.move(QPoint(xNext, yNext))
+        except Exception as ex:
+            print(ex)
+            pass
+
     def loadResources(self):
         self.windowIcon = QIcon(ICON_PATH)
+        self.symbolIcon = QIcon(SYMBOL_PATH)
         self.addIcon = QIcon(ADD_ICON_PATH)
         self.folderIcon = QIcon(FOLDER_ICON_PATH)
         self.closeIcon = QIcon(CLOSE_ICON_PATH)
@@ -118,11 +139,14 @@ class Obfuscator(QTabWidget):
         self.addPressedIcon = QIcon(ADD_PRESSED_ICON_PATH)
         self.folderPressedIcon = QIcon(FOLDER_PRESSED_ICON_PATH)
 
+        global exoFontFamily
+        global ubuntuMonoFontFamily
+
         font_id = QFontDatabase.addApplicationFont(FONT_EXO_2_PATH)
-        self.exoFontFamily = QFontDatabase.applicationFontFamilies(font_id)[0]
+        exoFontFamily = QFontDatabase.applicationFontFamilies(font_id)[0]
 
         font_id = QFontDatabase.addApplicationFont(FONT_UBUNTU_PATH)
-        self.ubuntuMonoFontFamily = QFontDatabase.applicationFontFamilies(font_id)[0]
+        ubuntuMonoFontFamily = QFontDatabase.applicationFontFamilies(font_id)[0]
 
     def confObfuscateModeWidgets(self):
         self.confListPathsTitle()
@@ -145,13 +169,18 @@ class Obfuscator(QTabWidget):
         self.confDecoderFilePathTitle()
         self.confSelectDecoderFileBtn()
         self.confDecoderFilePathDisabledInput()
+        self.confSymbolImageLabel()
+        self.confDeobfuscateBtn()
 
     def confWindowTitle(self):
-        listPathsTitle = self.buildLabel(
-            WINDOW_TITLE,
+
+        global ubuntuMonoFontFamily
+
+        listPathsTitle = buildLabel(
+            f'  {WINDOW_TITLE}',
             10,
             backgroundColor=PRIMARY_COLOR,
-            foregroundColor=WIDGET_BACKGROUND_COLOR,
+            foregroundColor='white',
             paddings={
                 'top': 7,
                 'left': 10,
@@ -165,13 +194,20 @@ class Obfuscator(QTabWidget):
                 'bottom-right': 7
             },
             font=QFont(
-                self.ubuntuMonoFontFamily,
+                ubuntuMonoFontFamily,
                 12,
-                weight=400
+                weight=500
             )
         )
         listPathsTitle.move(0, 0)
         listPathsTitle.setParent(self)
+
+    def confWindowIcon(self):
+        label = QLabel()
+        pixmap = QPixmap(SYMBOL_WHITE_MINI_PATH)
+        label.setPixmap(pixmap)
+        label.move(12, 5)
+        label.setParent(self)
 
     def confWindowControlButtons(self):
         self.confMinimizeWindow()
@@ -180,7 +216,7 @@ class Obfuscator(QTabWidget):
     def confMinimizeWindow(self):
         restoreDownWindowBtn = QPushButton()
         restoreDownWindowBtn.move(WINDOW_WIDTH - 120, 0)
-        restoreDownWindowBtn.setFixedSize(60, 31)
+        restoreDownWindowBtn.setFixedSize(60, 30)
 
         restoreDownWindowBtn.setStyleSheet(
             'QPushButton{'
@@ -204,7 +240,7 @@ class Obfuscator(QTabWidget):
     def confCloseBtn(self):
         closeWindowBtn = QPushButton()
         closeWindowBtn.move(WINDOW_WIDTH - 60, 0)
-        closeWindowBtn.setFixedSize(60, 31)
+        closeWindowBtn.setFixedSize(60, 30)
         closeWindowBtn.setStyleSheet(
             'QPushButton{'
             'background-color: rgba(230, 230, 230, 0.24);'
@@ -223,11 +259,11 @@ class Obfuscator(QTabWidget):
     def confChangeModeBtn(self):
         self.changeModeBtn = QPushButton(OBFUSCATION_MODE)
 
-        font = QFont(self.exoFontFamily, 10, weight=700)
+        font = QFont(exoFontFamily, 11, weight=500)
         self.changeModeBtn.setFont(font)
 
         self.changeModeBtn.move(230, 0)
-        self.changeModeBtn.setFixedSize(130, 31)
+        self.changeModeBtn.setFixedSize(130, 30)
 
         self.changeModeBtn.setStyleSheet(
             'QPushButton{'
@@ -257,34 +293,35 @@ class Obfuscator(QTabWidget):
         self.updateModeGUI()
 
     def confWindowModeText(self):
-        self.windowModeText = self.buildLabel(OBFUSCATION_MODE, 9, foregroundColor='#bfbfbf')
+        self.windowModeText = buildLabel(OBFUSCATION_MODE, 9, foregroundColor='#bfbfbf')
         self.windowModeText.move(380, 7)
         self.windowModeText.setParent(self)
 
     def confListPathsTitle(self):
-        listPathsTitle = self.buildLabel(FILE_PATH_LIST, 15)
+        listPathsTitle = buildLabel(FILE_PATH_LIST, 15)
         listPathsTitle.move(HORIZONTAL_PADDING + 5, TOP_PADDING)
         listPathsTitle.setParent(self)
         self.currentModeGUIElements.append(listPathsTitle)
 
     def confListPaths(self, width: int, height: int):
         left, top = HORIZONTAL_PADDING, TOP_PADDING + 40
+        global ubuntuMonoFontFamily
         deleteableListParams = DeleteableListParams(left, top, width, height, '#ffffff', WIDGET_BACKGROUND_COLOR,
-                                                    self.ubuntuMonoFontFamily, True,
+                                                    ubuntuMonoFontFamily, True,
                                                     moveVerticalScrollToEndWhenUpdateList=True,
                                                     moveHorizontalScrollToEndWhenUpdateList=True
                                                     )
         self.pathsList = DeleteableList(self, deleteableListParams)
         self.currentModeGUIElements.append(self.pathsList)
 
-    def confAddFilesBtn(self, x:int, y:int):
+    def confAddFilesBtn(self, x: int, y: int):
         addFilesBtn = QPushButton(ADD_FILES)
 
         addFilesBtn.clicked.connect(self.AddFilesAction)
         addFilesBtn.move(x, y)
         addFilesBtn.setFixedSize(120, 32)
 
-        font = QFont(self.exoFontFamily, 12, weight=400)
+        font = QFont(exoFontFamily, 12, weight=400)
         addFilesBtn.setFont(font)
 
         addFilesBtn.setIcon(self.folderIcon)
@@ -318,13 +355,13 @@ class Obfuscator(QTabWidget):
         self.currentModeGUIElements.append(addFilesBtn)
 
     def confDecoderFilePathTitle(self):
-        listPathsTitle = self.buildLabel(SELECT_DECODER_FILE, 15)
-        listPathsTitle.move(HORIZONTAL_PADDING + 5, 350)
+        listPathsTitle = buildLabel(SELECT_DECODER_FILE, 15)
+        listPathsTitle.move(HORIZONTAL_PADDING + 5, 370)
         listPathsTitle.setParent(self)
         self.currentModeGUIElements.append(listPathsTitle)
 
     def confListReferencesTitle(self):
-        self.listReferencesTitle = self.buildLabel(REFERENCES_LIST, 15)
+        self.listReferencesTitle = buildLabel(REFERENCES_LIST, 15)
         self.listReferencesTitle.move(WINDOW_WIDTH - HORIZONTAL_PADDING - 275, TOP_PADDING)
         self.listReferencesTitle.setParent(self)
         self.currentModeGUIElements.append(self.listReferencesTitle)
@@ -332,8 +369,9 @@ class Obfuscator(QTabWidget):
     def confReferencesList(self):
         left, top = WINDOW_WIDTH - HORIZONTAL_PADDING - 280, TOP_PADDING + 40
         width, height = 280, 420
+        global ubuntuMonoFontFamily
         deleteableListParams = DeleteableListParams(left, top, width, height, '#ffffff', WIDGET_BACKGROUND_COLOR,
-                                                    self.ubuntuMonoFontFamily, False,
+                                                    ubuntuMonoFontFamily, False,
                                                     moveVerticalScrollToEndWhenUpdateList=True,
                                                     moveHorizontalScrollToEndWhenUpdateList=True
                                                     )
@@ -341,7 +379,7 @@ class Obfuscator(QTabWidget):
         self.currentModeGUIElements.append(self.referencesList)
 
     def confInputReference(self):
-        self.inputReference = self.buildLineEdit({
+        self.inputReference = buildLineEdit({
             'top-left': 7,
             'top-right': 0,
             'bottom-left': 7,
@@ -377,7 +415,7 @@ class Obfuscator(QTabWidget):
             '}'
             '''
             QPushButton:hover{
-                 background-color: #44eb97; 
+                 background-color: #44eb97;
             }
             '''
             'QPushButton:pressed{'
@@ -396,18 +434,18 @@ class Obfuscator(QTabWidget):
         self.referencesList.addStringItem(referenceName)
 
     def confObfuscateBtn(self):
-        self.obfuscateBtn = QPushButton(START)
+        self.obfuscateBtn = QPushButton(OBFUSCATE)
 
-        self.obfuscateBtn.move(HORIZONTAL_PADDING, WINDOW_HEIGHT - BOTTOM_PADDING - 32)
-        self.obfuscateBtn.setFixedSize(140, 32)
+        self.obfuscateBtn.move(HORIZONTAL_PADDING, WINDOW_HEIGHT - BOTTOM_PADDING - 30)
+        self.obfuscateBtn.setFixedSize(160, 30)
 
-        font = QFont(self.exoFontFamily, 14, weight=400)
+        font = QFont(exoFontFamily, 14, weight=500)
         self.obfuscateBtn.setFont(font)
 
         self.obfuscateBtn.setStyleSheet(
             'QPushButton{'
-            'color: black;'
-            'background-color: white;'
+            'background-color: white; '
+            f'color: {WIDGET_BACKGROUND_COLOR};'
             'border-top-left-radius: 7%;'
             'border-top-right-radius: 7%;'
             'border-bottom-left-radius: 7%;'
@@ -415,13 +453,12 @@ class Obfuscator(QTabWidget):
             '}'
 
             'QPushButton:hover{'
-            f'background-color: {PRIMARY_COLOR}; '
-            'color: white;'
+            f'background-color: {SECONDARY_COLOR}; '
+            f'color: {WIDGET_BACKGROUND_COLOR};'
             '}'
 
             'QPushButton:pressed{'
-            f'color: {PRIMARY_COLOR};'
-            'background-color: white; '
+            'color: white;'
             '}'
         )
 
@@ -431,26 +468,26 @@ class Obfuscator(QTabWidget):
         self.currentModeGUIElements.append(self.obfuscateBtn)
 
     def confBinaryStringTitles(self):
-        self.binaryStringATitle = self.buildLabel(STRING_A, 13)
+        self.binaryStringATitle = buildLabel(STRING_A, 13)
         self.binaryStringATitle.move(120, 345 - TITLE_Y_CORRECTION)
         self.binaryStringATitle.setFixedSize(QSize(120, 30))
         self.binaryStringATitle.setParent(self)
         self.currentModeGUIElements.append(self.binaryStringATitle)
 
-        self.binaryStringBTitle = self.buildLabel(STRING_B, 13)
+        self.binaryStringBTitle = buildLabel(STRING_B, 13)
         self.binaryStringBTitle.move(297, 345 - TITLE_Y_CORRECTION)
         self.binaryStringBTitle.setFixedSize(QSize(120, 30))
         self.binaryStringBTitle.setParent(self)
         self.currentModeGUIElements.append(self.binaryStringBTitle)
 
     def confBinaryStringInputs(self):
-        self.binaryStringAInput = self.buildBinaryStringInput()
+        self.binaryStringAInput = buildBinaryStringInput()
         self.binaryStringAInput.move(110, 375)
         self.binaryStringAInput.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.binaryStringAInput.setParent(self)
         self.currentModeGUIElements.append(self.binaryStringAInput)
 
-        self.binaryStringBInput = self.buildBinaryStringInput()
+        self.binaryStringBInput = buildBinaryStringInput()
         self.binaryStringBInput.move(290, 375)
         self.binaryStringBInput.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.binaryStringBInput.setParent(self)
@@ -460,7 +497,7 @@ class Obfuscator(QTabWidget):
         minCheckbox = QCheckBox(MINIFY_CODE, self)
         minCheckbox.move(195, 430)
         minCheckbox.setFixedSize(145, 25)
-        font = QFont(self.exoFontFamily, 12, weight=400)
+        font = QFont(exoFontFamily, 12, weight=400)
         minCheckbox.setFont(font)
         minCheckbox.setCheckState(Qt.CheckState.Unchecked)
         minCheckbox.setStyleSheet(
@@ -492,7 +529,7 @@ class Obfuscator(QTabWidget):
         saveDecoderFileCheckbox = QCheckBox(SAVE_DECODER_FILE_CODE, self)
         saveDecoderFileCheckbox.move(195, 470)
         saveDecoderFileCheckbox.setFixedSize(180, 25)
-        font = QFont(self.exoFontFamily, 12, weight=400)
+        font = QFont(exoFontFamily, 12, weight=400)
         saveDecoderFileCheckbox.setFont(font)
         saveDecoderFileCheckbox.setCheckState(Qt.CheckState.Unchecked)
         saveDecoderFileCheckbox.setStyleSheet(
@@ -520,38 +557,12 @@ class Obfuscator(QTabWidget):
     def changStateOfShouldSaveDecoder(self, state):
         self.shouldSaveDecoder = state != Qt.CheckState.Checked
 
-
-    def mousePressEvent(self, event: QMouseEvent):
-        self.isMousePressWindow = True
-        self.offsetWindowPosition = event.pos()
-
-    def mouseReleaseEvent(self, event: QMouseEvent):
-        self.isMousePressWindow = False
-
-    def mouseMoveEvent(self, event: QMouseEvent):
-        
-        print(f'Window is pressed: {self.isMousePressWindow}')
-
-        if(not self.isMousePressWindow or self.offsetWindowPosition is None):
-            return
-        
-        try:
-            globalPositionPoint: QPointF = event.globalPosition()
-            xW = float(self.offsetWindowPosition.x())
-            yW = float(self.offsetWindowPosition.y())
-            xNext, yNext = int(globalPositionPoint.x() - xW), int(globalPositionPoint.y() - yW)
-            print(f'Move to {xNext} ̣{yNext}')
-            self.move(QPoint(xNext, yNext))
-        except Exception as ex:
-            print(ex)
-            pass
-
     def confSelectDecoderFileBtn(self):
         selectDecoderFileBtn = QPushButton()
         selectDecoderFileBtn.setIcon(self.folderIcon)
 
-        selectDecoderFileBtn.move(HORIZONTAL_PADDING, 385)
-        selectDecoderFileBtn.setFixedSize(110, 30)
+        selectDecoderFileBtn.move(HORIZONTAL_PADDING, 410)
+        selectDecoderFileBtn.setFixedSize(110, 31)
         selectDecoderFileBtn.setIconSize(QSize(27, 27))
 
         selectDecoderFileBtn.clicked.connect(self.findDecoderFileAction)
@@ -582,7 +593,7 @@ class Obfuscator(QTabWidget):
         self.currentModeGUIElements.append(selectDecoderFileBtn)
 
     def confDecoderFilePathDisabledInput(self):
-        self.decoderFilePathDisabledInput = self.buildLineEdit({
+        self.decoderFilePathDisabledInput = buildLineEdit({
             'top-left': 0,
             'top-right': 7,
             'bottom-left': 0,
@@ -592,17 +603,59 @@ class Obfuscator(QTabWidget):
         self.decoderFilePathDisabledInput.setStyleSheet(
             f'{self.decoderFilePathDisabledInput.styleSheet()}'
             'QLineEdit{'
-                f'border-color: {PRIMARY_COLOR};'
+            f'border-color: {PRIMARY_COLOR};'
             '}'
         )
 
-        self.decoderFilePathDisabledInput.move(HORIZONTAL_PADDING + 110, 385)
-        self.decoderFilePathDisabledInput.setFixedSize(WINDOW_WIDTH - HORIZONTAL_PADDING * 2 - 110, 30)
+        self.decoderFilePathDisabledInput.move(HORIZONTAL_PADDING + 110, 410)
+        self.decoderFilePathDisabledInput.setFixedSize(WINDOW_WIDTH - HORIZONTAL_PADDING * 2 - 110, 31)
         self.decoderFilePathDisabledInput.setDisabled(True)
 
         self.decoderFilePathDisabledInput.setParent(self)
         self.currentModeGUIElements.append(self.decoderFilePathDisabledInput)
-    
+
+    def confSymbolImageLabel(self):
+
+        """  painter = QPainter(self)
+        painter.translate(20, 100)
+        painter.rotate(-90)
+        painter.drawPixmap(QPoint(300,300), QPixmap(SYMBOL_PATH)) """
+        pass
+
+    def confDeobfuscateBtn(self):
+        self.deobfuscateBtn = QPushButton(DEOBFUSCATE)
+
+        self.deobfuscateBtn.move(HORIZONTAL_PADDING, WINDOW_HEIGHT - BOTTOM_PADDING - 30)
+        self.deobfuscateBtn.setFixedSize(160, 30)
+
+        font = QFont(exoFontFamily, 14, weight=500)
+        self.deobfuscateBtn.setFont(font)
+
+        self.deobfuscateBtn.setStyleSheet(
+            'QPushButton{'
+            'background-color: white; '
+            f'color: {WIDGET_BACKGROUND_COLOR};'
+            'border-top-left-radius: 7%;'
+            'border-top-right-radius: 7%;'
+            'border-bottom-left-radius: 7%;'
+            'border-bottom-right-radius: 7%;'
+            '}'
+
+            'QPushButton:hover{'
+            f'background-color: {SECONDARY_COLOR}; '
+            f'color: {WIDGET_BACKGROUND_COLOR};'
+            '}'
+
+            'QPushButton:pressed{'
+            'color: white;'
+            '}'
+        )
+
+        self.deobfuscateBtn.clicked.connect(self.controller.deobfuscateAction)
+
+        self.deobfuscateBtn.setParent(self)
+        self.currentModeGUIElements.append(self.deobfuscateBtn)
+
     # Files explorer GUI system actions
 
     def AddFilesAction(self):
@@ -619,7 +672,7 @@ class Obfuscator(QTabWidget):
         path = self.showAndGetFileName('Decoder file (*.dec)')
         self.decoderFilePathDisabledInput.setText(path)
 
-    def requestFilePathToUsetToSaveDecoderFile(self)->str | None:
+    def requestFilePathToUsetToSaveDecoderFile(self) -> str | None:
 
         dialog = QFileDialog()
         dialog.setFilter(dialog.filter() | QDir.Filter.Hidden)
@@ -638,86 +691,10 @@ class Obfuscator(QTabWidget):
     def showAndGetFileNames(self, extensionFilter: str) -> list:
         fileNames, _ = QFileDialog.getOpenFileNames(self, "Select files", "", extensionFilter)
         return fileNames
-    
+
     def showAndGetFileName(self, extensionFilter: str) -> str:
         fileName, _ = QFileDialog.getOpenFileName(self, "Select file", "", extensionFilter)
         return fileName
-    
-    # BUILD FUNCTIONS
-
-    def buildBinaryStringInput(self) -> QLineEdit:
-        binaryStringInput = self.buildLineEdit({
-            'top-left': 7,
-            'top-right': 7,
-            'bottom-left': 7,
-            'bottom-right': 7,
-        })
-        binaryStringInput.setFixedSize(120, 30)
-        return binaryStringInput
-
-    def buildLineEdit(self, radiusSizes: dict | None = None) -> QLineEdit:
-        lineEdit = QLineEdit()
-        font = QFont(self.ubuntuMonoFontFamily, 14)
-        lineEdit.setFont(font)
-
-        if radiusSizes is None:
-            lineEdit.setStyleSheet(
-                'QLineEdit{'
-                f'background-color: {WIDGET_BACKGROUND_COLOR};'
-                'color: white;'
-                'border: 2px solid white;'
-                '}'
-            )
-        else:
-            lineEdit.setStyleSheet(
-                'QLineEdit{'
-                f'background-color: {WIDGET_BACKGROUND_COLOR};'
-                'color: white;'
-                'border: 2px solid white;'
-                f'border-top-left-radius: {radiusSizes.get("top-left", 0)}%;'
-                f'border-top-right-radius: {radiusSizes.get("top-right", 0)}%;'
-                f'border-bottom-left-radius: {radiusSizes.get("bottom-left", 0)}%;'
-                f'border-bottom-right-radius: {radiusSizes.get("bottom-right", 0)}%;'
-                '}'
-            )
-
-        return lineEdit
-
-    def buildLabel(self, text: str, fontSize: int, backgroundColor: str | None = None, foregroundColor=None,
-                   paddings: dict | None = None, radiusSizes: dict | None = None,
-                   font: QFont | None = None) -> QLabel:
-        label = QLabel(text)
-
-        styleSheet = ''
-
-        if backgroundColor is not None:
-            styleSheet += f'background-color: {backgroundColor};'
-
-        if foregroundColor is None:
-            foregroundColor = 'white'
-
-        styleSheet += f'color: {foregroundColor};'
-
-        if paddings is not None:
-            styleSheet += f'padding-top: {paddings["top"]}px;'
-            styleSheet += f'padding-bottom: {paddings["bottom"]}px;'
-            styleSheet += f'padding-left: {paddings["left"]}px;'
-            styleSheet += f'padding-right: {paddings["right"]}px;'
-
-        if font is None:
-            font = QFont(self.exoFontFamily, fontSize, weight=400)
-
-        if radiusSizes is not None:
-            styleSheet += f'border-top-left-radius: {radiusSizes.get("top-left", 0)}%;'
-            styleSheet += f'border-top-right-radius: {radiusSizes.get("top-right", 0)}%;'
-            styleSheet += f'border-bottom-left-radius: {radiusSizes.get("bottom-left", 0)}%;'
-            styleSheet += f'border-bottom-right-radius: {radiusSizes.get("bottom-right", 0)}%;'
-
-        label.setFont(font)
-
-        label.setStyleSheet(styleSheet)
-
-        return label
 
     # GETTERS AND SETTERS
 
@@ -735,3 +712,9 @@ class Obfuscator(QTabWidget):
 
     def enableObfuscateBtn(self, enable: bool):
         self.obfuscateBtn.setEnabled(enable)
+
+    def enableDeobfuscateBtn(self, enable: bool):
+        self.deobfuscateBtn.setEnabled(enable)
+
+    def getDecoderFilePath(self) -> str:
+        return self.decoderFilePathDisabledInput.text()

@@ -1,4 +1,6 @@
 ICON_PATH = './assets/icon.ico'
+SYMBOL_PATH = './assets/symbol.png'
+SYMBOL_WHITE_MINI_PATH = './assets/symbol_white_mini.png'
 ADD_ICON_PATH = './assets/plus.png'
 FOLDER_ICON_PATH = './assets/folder.png'
 

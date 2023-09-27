@@ -26,9 +26,7 @@ class ObfuscatorController:
             return
 
         if shouldSaveDecoder:
-
             path = self.view.requestFilePathToUsetToSaveDecoderFile()
-
             if path is None:
                 return
 
@@ -37,7 +35,7 @@ class ObfuscatorController:
         self.obfuscateFiles(filePaths, referencesDictionary, references, shouldMinifyCode)
 
         if shouldSaveDecoder:
-            self.saveDecoderFile(path, stringA, stringB,referencesDictionary) # type: ignore
+            self.saveDecoderFile(path, referencesDictionary)  # type: ignore
 
         self.view.enableObfuscateBtn(True)
 
@@ -61,19 +59,14 @@ class ObfuscatorController:
 
                 if shouldMinifyCode:
                     fileContent = fileContent.replace('\n', '')
-                else:
-                    fileContent = fileContent.replace('\n\n', '\n')
 
         obfuscatedFile.write(fileContent)
         obfuscatedFile.close()
 
     def createReferencesDictionary(self, stringA: str, stringB: str, references: list) -> dict:
-
         # sort references
         references = sorted(references, reverse=True, key=lambda ref: len(ref))
-
         combinations = self.generateCombinations(len(references), stringA, stringB)
-
         return self.buildReferencesDictionary(references, combinations)
 
     def buildReferencesDictionary(self, references: list, combinations: list) -> dict:
@@ -104,16 +97,46 @@ class ObfuscatorController:
             nCombs = 2 ** exp
         return exp
 
-    def saveDecoderFile(self, path: str, stringA:str, stringB:str, referencesDictionary: dict):
+    def saveDecoderFile(self, path: str, referencesDictionary: dict):
 
-        decoderDic = {
-            'string-a': stringA,
-            'string-b': stringB,
-            'references': referencesDictionary
-        }
-
-        binarySerialization = pickle.dumps(decoderDic)
+        binarySerialization = pickle.dumps(referencesDictionary)
 
         decoderFile = open(path, 'wb')
         decoderFile.write(binarySerialization)
         decoderFile.close()
+
+    def deobfuscateAction(self):
+        self.view.enableDeobfuscateBtn(False)
+
+        filePaths = self.view.getFilePaths()
+        decoderFilePath = self.view.getDecoderFilePath()
+
+        references: dict = self.loadReferences(decoderFilePath)
+
+        self.deobfuscateFiles(filePaths, references)
+
+        self.view.enableDeobfuscateBtn(True)
+
+    def loadReferences(self, decoderFilePath: str) -> dict:
+        binarySerialization = open(decoderFilePath, 'rb').read()
+        references: dict = pickle.loads(binarySerialization)
+        return references
+
+    def deobfuscateFiles(self, filePaths: list, referencesDictionary: dict):
+        for filePath in filePaths:
+            self.deobfuscateFile(filePath, referencesDictionary)
+
+    def deobfuscateFile(self, filePath: str, references: dict):
+        originalFile = open(filePath, 'r')
+        fileContent = originalFile.read()
+        originalFile.close()
+
+        extension = extractPathExtension(filePath)
+        obfuscatedFile = open(filePath.replace(extension, '') + '.deobf' + extension, 'w')
+
+        for referenceKey in references.keys():
+            if fileContent.find(references[referenceKey]) != -1:
+                fileContent = fileContent.replace(references[referenceKey], referenceKey)
+
+        obfuscatedFile.write(fileContent)
+        obfuscatedFile.close()
